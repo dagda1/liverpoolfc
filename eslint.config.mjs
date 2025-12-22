@@ -64,7 +64,7 @@ export default [
     },
   },
   {
-    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.styles.ts', '**/*.styles.tsx'],
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.styles.ts', '**/*.styles.tsx', '**/vite.config.ts'],
     rules: {
       'max-lines': 'off',
     },

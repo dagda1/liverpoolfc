@@ -142,6 +142,18 @@ async function main() {
 
   console.log(`\n✓ Total: ${allMatches.length} matches across ${allSeasonStats.length} seasons`);
   console.log(`✓ Titles: ${allSeasonStats.filter((s) => s.leaguePosition === 1).length}`);
+
+  const fs = await import('fs/promises');
+  const path = await import('path');
+
+  const dataDir = path.join(process.cwd(), '../../.data');
+  await fs.mkdir(dataDir, { recursive: true });
+
+  await fs.writeFile(path.join(dataDir, 'matches.json'), JSON.stringify(allMatches, null, 2), 'utf-8');
+
+  await fs.writeFile(path.join(dataDir, 'season-stats.json'), JSON.stringify(allSeasonStats, null, 2), 'utf-8');
+
+  console.log(`\n✓ Data saved to ${dataDir}/`);
 }
 
 main().catch(console.error);

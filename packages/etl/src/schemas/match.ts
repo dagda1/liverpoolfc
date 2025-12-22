@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { SeasonSchema } from '~/schemas/season';
-import { TeamSchema } from '~/schemas/team';
+import { SeasonSchema } from './season';
+import { TeamSchema } from './team';
 
 export const MatchSchema = z.object({
   id: z.string(),

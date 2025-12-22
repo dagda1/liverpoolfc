@@ -87,3 +87,5 @@ tsconfig.json.bak*
 regression-tests/.auth
 .env
 /testReport/
+
+.data
