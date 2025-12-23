@@ -16,7 +16,7 @@ type ToolParams = z.infer<typeof toolSchema>;
 export const getHeadToHead: TamboTool = {
   name: 'getHeadToHead',
   description: 'Get Liverpool head-to-head record against a specific opponent with optional date filtering',
-  toolSchema,
+  toolSchema: z.function().args(toolSchema).returns(z.any()),
   tool: async (params: ToolParams) => {
     const matches = await loadMatches();
 

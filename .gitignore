@@ -89,3 +89,4 @@ regression-tests/.auth
 /testReport/
 
 .data
+.env

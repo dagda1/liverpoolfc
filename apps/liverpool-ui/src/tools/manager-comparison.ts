@@ -16,7 +16,7 @@ type ToolSchema = z.infer<typeof toolSchema>;
 export const compareManagers: TamboTool = {
   name: 'compareManagers',
   description: 'Compare performance of two Liverpool managers over their first N months',
-  toolSchema,
+  toolSchema: z.function().args(toolSchema).returns(z.any()),
   tool: async (params: ToolSchema) => {
     const matches = await loadMatches();
 
@@ -35,10 +35,20 @@ export const compareManagers: TamboTool = {
       const startDate = new Date(manager.startDate);
       const endDate = addMonths(startDate, months);
 
+      console.log(`Manager: ${manager.name}`);
+      console.log(`Start: ${startDate.toISOString()}, End: ${endDate.toISOString()}`);
+      console.log(`Total matches available: ${matches.length}`);
+      if (matches.length > 0) {
+        console.log(`First match date: ${matches[0].date}`);
+        console.log(`Last match date: ${matches[matches.length - 1].date}`);
+      }
+
       const managerMatches = matches.filter((m) => {
         const matchDate = new Date(m.date);
         return matchDate >= startDate && matchDate < endDate;
       });
+
+      console.log(`Matches found for ${manager.name}: ${managerMatches.length}`);
 
       const wins = managerMatches.filter((m) => {
         if (m.homeTeam.id === 'liverpool') {

@@ -47,6 +47,8 @@ async function fetchSeasonData(seasonId: string) {
 
   const standingsRes = await fetch(standingsUrl);
   if (!standingsRes.ok) {
+    console.warn(standingsUrl);
+    console.error('Standings response:', standingsRes.status, standingsRes.statusText);
     throw new Error(`Failed to fetch standings for ${seasonId}`);
   }
 
@@ -63,80 +65,73 @@ async function main() {
   const allSeasonStats: SeasonStats[] = [];
 
   for (const seasonId of SEASONS) {
-    try {
-      console.log(`Parsing ${seasonId}...`);
+    console.log(`Parsing ${seasonId}...`);
 
-      const season = createSeason(seasonId);
-      const data = await fetchSeasonData(seasonId);
+    const season = createSeason(seasonId);
+    const data = await fetchSeasonData(seasonId);
 
-      const matches = parseSeasonFile(data.matches, season);
+    const matches = parseSeasonFile(data.matches, season);
 
-      let liverpoolStanding;
-      if (MANUAL_STANDINGS[seasonId]) {
-        liverpoolStanding = MANUAL_STANDINGS[seasonId];
-      } else {
-        const standings = parseStandings(data.standings, season);
-        liverpoolStanding = getLiverpoolStanding(standings);
-      }
+    let liverpoolStanding;
+    if (MANUAL_STANDINGS[seasonId]) {
+      liverpoolStanding = MANUAL_STANDINGS[seasonId];
+    } else {
+      const standings = parseStandings(data.standings, season);
+      liverpoolStanding = getLiverpoolStanding(standings);
+    }
 
-      if (!liverpoolStanding) {
-        console.error(`  ✗ Liverpool not found in standings`);
-        continue;
-      }
+    if (!liverpoolStanding) {
+      throw new Error(`Liverpool not found in standings for ${seasonId}`);
+    }
 
-      allMatches.push(...matches);
+    allMatches.push(...matches);
 
-      const homeMatches = matches.filter((m) => m.homeTeam.id === 'liverpool');
-      const awayMatches = matches.filter((m) => m.awayTeam.id === 'liverpool');
+    const homeMatches = matches.filter((m) => m.homeTeam.id === 'liverpool');
+    const awayMatches = matches.filter((m) => m.awayTeam.id === 'liverpool');
 
-      const homeRecord = {
-        won: homeMatches.filter((m) => m.homeScore > m.awayScore).length,
-        drawn: homeMatches.filter((m) => m.homeScore === m.awayScore).length,
-        lost: homeMatches.filter((m) => m.homeScore < m.awayScore).length,
-      };
+    const homeRecord = {
+      won: homeMatches.filter((m) => m.homeScore > m.awayScore).length,
+      drawn: homeMatches.filter((m) => m.homeScore === m.awayScore).length,
+      lost: homeMatches.filter((m) => m.homeScore < m.awayScore).length,
+    };
 
-      const awayRecord = {
-        won: awayMatches.filter((m) => m.awayScore > m.homeScore).length,
-        drawn: awayMatches.filter((m) => m.awayScore === m.homeScore).length,
-        lost: awayMatches.filter((m) => m.awayScore < m.homeScore).length,
-      };
+    const awayRecord = {
+      won: awayMatches.filter((m) => m.awayScore > m.homeScore).length,
+      drawn: awayMatches.filter((m) => m.awayScore === m.homeScore).length,
+      lost: awayMatches.filter((m) => m.awayScore < m.homeScore).length,
+    };
 
-      const seasonStats: SeasonStats = {
-        season,
-        leaguePosition: liverpoolStanding.position,
-        played: liverpoolStanding.played,
-        won: liverpoolStanding.won,
-        drawn: liverpoolStanding.drawn,
-        lost: liverpoolStanding.lost,
-        goalsFor: liverpoolStanding.goalsFor,
-        goalsAgainst: liverpoolStanding.goalsAgainst,
-        goalDifference: liverpoolStanding.goalsFor - liverpoolStanding.goalsAgainst,
-        points: liverpoolStanding.points,
-        homeRecord,
-        awayRecord,
-      };
+    const seasonStats: SeasonStats = {
+      season,
+      leaguePosition: liverpoolStanding.position,
+      played: liverpoolStanding.played,
+      won: liverpoolStanding.won,
+      drawn: liverpoolStanding.drawn,
+      lost: liverpoolStanding.lost,
+      goalsFor: liverpoolStanding.goalsFor,
+      goalsAgainst: liverpoolStanding.goalsAgainst,
+      goalDifference: liverpoolStanding.goalsFor - liverpoolStanding.goalsAgainst,
+      points: liverpoolStanding.points,
+      homeRecord,
+      awayRecord,
+    };
 
-      allSeasonStats.push(seasonStats);
+    allSeasonStats.push(seasonStats);
 
-      console.log(`  ✓ ${matches.length} Liverpool matches`);
-      console.log(`  ✓ Position: ${liverpoolStanding.position}, Points: ${liverpoolStanding.points}`);
-      console.log(`  ✓ W:${liverpoolStanding.won} D:${liverpoolStanding.drawn} L:${liverpoolStanding.lost}`);
-      console.log(`  ✓ GF:${liverpoolStanding.goalsFor} GA:${liverpoolStanding.goalsAgainst}`);
+    console.log(`  ✓ ${matches.length} Liverpool matches`);
+    console.log(`  ✓ Position: ${liverpoolStanding.position}, Points: ${liverpoolStanding.points}`);
+    console.log(`  ✓ W:${liverpoolStanding.won} D:${liverpoolStanding.drawn} L:${liverpoolStanding.lost}`);
+    console.log(`  ✓ GF:${liverpoolStanding.goalsFor} GA:${liverpoolStanding.goalsAgainst}`);
 
-      if (matches.length > 0) {
-        const firstMatch = matches[0];
-        const lastMatch = matches[matches.length - 1];
-        console.log(
-          `  First: ${firstMatch.homeTeam.name} ${firstMatch.homeScore}-${firstMatch.awayScore} ${firstMatch.awayTeam.name}`,
-        );
-        console.log(
-          `  Last:  ${lastMatch.homeTeam.name} ${lastMatch.homeScore}-${lastMatch.awayScore} ${lastMatch.awayTeam.name}`,
-        );
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error(`  ✗ Error: ${error.message}`);
-      }
+    if (matches.length > 0) {
+      const firstMatch = matches[0];
+      const lastMatch = matches[matches.length - 1];
+      console.log(
+        `  First: ${firstMatch.homeTeam.name} ${firstMatch.homeScore}-${firstMatch.awayScore} ${firstMatch.awayTeam.name}`,
+      );
+      console.log(
+        `  Last:  ${lastMatch.homeTeam.name} ${lastMatch.homeScore}-${lastMatch.awayScore} ${lastMatch.awayTeam.name}`,
+      );
     }
   }
 
@@ -146,14 +141,34 @@ async function main() {
   const fs = await import('fs/promises');
   const path = await import('path');
 
-  const dataDir = path.join(process.cwd(), '../../.data');
-  await fs.mkdir(dataDir, { recursive: true });
+  const rootDataDir = path.join(process.cwd(), '../../.data');
+  const uiPublicDataDir = path.join(process.cwd(), '../../apps/liverpool-ui/public/.data');
 
-  await fs.writeFile(path.join(dataDir, 'matches.json'), JSON.stringify(allMatches, null, 2), 'utf-8');
+  try {
+    await fs.rm(rootDataDir, { recursive: true, force: true });
+  } catch {
+    // Ignore if directory doesn't exist
+  }
 
-  await fs.writeFile(path.join(dataDir, 'season-stats.json'), JSON.stringify(allSeasonStats, null, 2), 'utf-8');
+  try {
+    await fs.rm(uiPublicDataDir, { recursive: true, force: true });
+  } catch {
+    // Ignore if directory doesn't exist
+  }
 
-  console.log(`\n✓ Data saved to ${dataDir}/`);
+  await fs.mkdir(rootDataDir, { recursive: true });
+  await fs.mkdir(uiPublicDataDir, { recursive: true });
+
+  const matchesJson = JSON.stringify(allMatches, null, 2);
+  const seasonStatsJson = JSON.stringify(allSeasonStats, null, 2);
+
+  await fs.writeFile(path.join(rootDataDir, 'matches.json'), matchesJson, 'utf-8');
+  await fs.writeFile(path.join(rootDataDir, 'season-stats.json'), seasonStatsJson, 'utf-8');
+
+  await fs.writeFile(path.join(uiPublicDataDir, 'matches.json'), matchesJson, 'utf-8');
+  await fs.writeFile(path.join(uiPublicDataDir, 'season-stats.json'), seasonStatsJson, 'utf-8');
+
+  console.log(`\n✓ Data saved to ${rootDataDir}/ and ${uiPublicDataDir}/`);
 }
 
 main().catch(console.error);

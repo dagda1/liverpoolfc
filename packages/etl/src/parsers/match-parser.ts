@@ -3,22 +3,64 @@ import { MatchSchema } from '~/schemas';
 
 import { LIVERPOOL } from '../schemas/team';
 
-export function parseMatchLine(line: string, season: Season, matchday: number, date: Date): Match | null {
+export function parseMatchLine(
+  line: string,
+  season: Season,
+  matchday: number,
+  date: Date,
+  lastKickoffTime?: string,
+): Match | null {
   const trimmed = line.trim();
   if (!trimmed || trimmed.startsWith('#')) {
     return null;
   }
 
   const timeMatch = trimmed.match(/^(\d{2}\.\d{2})\s+(.+)$/);
+  let kickoffTime: string;
+  let rest: string;
+
   if (!timeMatch) {
-    return null;
+    if (!lastKickoffTime) {
+      return null;
+    }
+    kickoffTime = lastKickoffTime;
+    rest = trimmed;
+  } else {
+    [, kickoffTime, rest] = timeMatch;
   }
 
-  const [, kickoffTime, rest] = timeMatch;
-
-  const scoreMatch = rest.match(/^(.+?)\s+(\d+)-(\d+)\s+\((\d+)-(\d+)\)\s+(.+)$/);
+  let scoreMatch = rest.match(/^(.+?)\s+(\d+)-(\d+)\s+\((\d+)-(\d+)\)\s+(.+)$/);
   if (!scoreMatch) {
-    return null;
+    scoreMatch = rest.match(/^(.+?)\s+v\s+(.+?)\s+(\d+)-(\d+)\s+\((\d+)-(\d+)\)$/);
+    if (!scoreMatch) {
+      return null;
+    }
+    const [, homeTeamName, awayTeamName, homeScore, awayScore, htHome, htAway] = scoreMatch;
+
+    const homeTeam = normalizeTeam(homeTeamName.trim());
+    const awayTeam = normalizeTeam(awayTeamName.trim());
+
+    const isLiverpoolMatch = homeTeam.id === 'liverpool' || awayTeam.id === 'liverpool';
+
+    if (!isLiverpoolMatch) {
+      return null;
+    }
+
+    const match: Match = {
+      id: `${season.id}-md${matchday}-${homeTeam.id}-${awayTeam.id}`,
+      season,
+      matchday,
+      date,
+      kickoffTime,
+      homeTeam,
+      awayTeam,
+      homeScore: parseInt(homeScore, 10),
+      awayScore: parseInt(awayScore, 10),
+      halfTimeHomeScore: parseInt(htHome, 10),
+      halfTimeAwayScore: parseInt(htAway, 10),
+    };
+
+    return MatchSchema.parse(match);
   }
 
   const [, homeTeamName, homeScore, awayScore, htHome, htAway, awayTeamName] = scoreMatch;

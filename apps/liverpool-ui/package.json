@@ -4,9 +4,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "lint": "eslint ./src/**/*.{ts,tsx} --fix",
+    "dev": "vite dev --force --host --port 3500 -l info",
+    "preview": "vite preview --host --port 3500 -l info",
+    "test": "cross-env NODE_ENV=test vitest",
+    "test:ci": "cross-env NODE_ENV=test vitest --run --coverage --testTimeout=30000",
+    "visualise-bundle": "npx vite-bundle-visualizer"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -20,12 +24,12 @@
   "devDependencies": {
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "zod": "^4.2.1"
+    "zod": "^3.25.76"
   },
   "peerDependencies": {
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "zod": "^4.2.1"
+    "zod": "^3.25.76"
   },
   "volta": {
     "extends": "../../package.json"

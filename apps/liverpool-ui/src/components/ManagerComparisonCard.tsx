@@ -14,6 +14,14 @@ const ManagerStatsSchema = z.object({
   winPercentage: z.string(),
 });
 
+const ManagerComparisonPropsSchema = z.object({
+  comparison: z.object({
+    period: z.string(),
+    manager1: ManagerStatsSchema,
+    manager2: ManagerStatsSchema,
+  }),
+});
+
 type ManagerStats = {
   manager: string;
   matches: number;
@@ -36,6 +44,10 @@ function ManagerComparisonCardComponent({
     manager2: ManagerStats;
   };
 }): JSX.Element {
+  if (!comparison) {
+    return <Typography>Loading comparison data...</Typography>;
+  }
+
   const { period, manager1, manager2 } = comparison;
 
   const StatRow = ({ label, val1, val2 }: { label: string; val1: string | number; val2: string | number }) => (
@@ -96,11 +108,5 @@ export const ManagerComparisonCard = {
   name: 'ManagerComparisonCard',
   description: 'Compare performance statistics of two managers',
   component: ManagerComparisonCardComponent,
-  propsSchema: z.object({
-    comparison: z.object({
-      period: z.string(),
-      manager1: ManagerStatsSchema,
-      manager2: ManagerStatsSchema,
-    }),
-  }),
+  propsSchema: ManagerComparisonPropsSchema,
 };
