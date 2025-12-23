@@ -1,23 +1,6 @@
 import { Box, Card, CardContent, Chip, Divider, Typography } from '@mui/material';
-import { z } from 'zod';
 
-const RecentMatchSchema = z.object({
-  date: z.string(),
-  homeTeam: z.string(),
-  awayTeam: z.string(),
-  score: z.string(),
-});
-
-const HeadToHeadPropsSchema = z.object({
-  opponent: z.string(),
-  matches: z.number(),
-  wins: z.number(),
-  draws: z.number(),
-  losses: z.number(),
-  goalsFor: z.number(),
-  goalsAgainst: z.number(),
-  recentMatches: z.array(RecentMatchSchema).optional(),
-});
+import { HeadToHeadSchema, type RecentMatch } from '../schemas/head-to-head';
 
 function HeadToHeadCardComponent({
   opponent,
@@ -36,7 +19,7 @@ function HeadToHeadCardComponent({
   losses: number;
   goalsFor: number;
   goalsAgainst: number;
-  recentMatches?: Array<{ date: string; homeTeam: string; awayTeam: string; score: string }>;
+  recentMatches?: RecentMatch[];
 }): JSX.Element {
   return (
     <Card sx={{ maxWidth: 600, mx: 'auto', my: 2 }}>
@@ -80,5 +63,5 @@ export const HeadToHeadCard = {
   name: 'HeadToHeadCard',
   description: 'Display head-to-head record against an opponent',
   component: HeadToHeadCardComponent,
-  propsSchema: HeadToHeadPropsSchema,
+  propsSchema: HeadToHeadSchema,
 };

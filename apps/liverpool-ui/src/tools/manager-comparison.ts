@@ -4,21 +4,27 @@ import { addMonths } from 'date-fns';
 import { z } from 'zod';
 
 import { loadMatches } from '../data/loader';
+import { ManagerComparisonSchema } from '../schemas/manager-comparison';
 
 const toolSchema = z.object({
   manager1: z.string().describe('First manager name (e.g., "Klopp", "Slot")'),
   manager2: z.string().describe('Second manager name'),
-  months: z.number().describe('Number of months to compare (e.g., 6 for first 6 months)'),
+  months: z.number().optional().describe('Number of months to compare (e.g., 6 for first 6 months)'),
+  matches: z.number().optional().describe('Number of matches to compare (e.g., 100 for first 100 matches)'),
 });
 
 type ToolSchema = z.infer<typeof toolSchema>;
 
 export const compareManagers: TamboTool = {
   name: 'compareManagers',
-  description: 'Compare performance of two Liverpool managers over their first N months',
-  toolSchema: z.function().args(toolSchema).returns(z.any()),
+  description: 'Compare performance of two Liverpool managers over their first N months or N matches',
+  toolSchema: z.function().args(toolSchema).returns(ManagerComparisonSchema),
   tool: async (params: ToolSchema) => {
     const matches = await loadMatches();
+
+    if (!params.months && !params.matches) {
+      return { error: 'Must specify either months or matches to compare' };
+    }
 
     const findManager = (name: string) => {
       return LIVERPOOL_MANAGERS.find((m: { name: string }) => m.name.toLowerCase().includes(name.toLowerCase()));
@@ -31,22 +37,31 @@ export const compareManagers: TamboTool = {
       return { error: 'Manager not found' };
     }
 
-    const getManagerStats = (manager: typeof mgr1, months: number) => {
+    const getManagerStats = (manager: typeof mgr1) => {
       const startDate = new Date(manager.startDate);
-      const endDate = addMonths(startDate, months);
+      const endDate = manager.endDate ? new Date(manager.endDate) : new Date();
 
       console.log(`Manager: ${manager.name}`);
-      console.log(`Start: ${startDate.toISOString()}, End: ${endDate.toISOString()}`);
-      console.log(`Total matches available: ${matches.length}`);
-      if (matches.length > 0) {
-        console.log(`First match date: ${matches[0].date}`);
-        console.log(`Last match date: ${matches[matches.length - 1].date}`);
-      }
+      console.log(`Start: ${startDate.toISOString()}`);
 
-      const managerMatches = matches.filter((m) => {
+      const allManagerMatches = matches.filter((m) => {
         const matchDate = new Date(m.date);
-        return matchDate >= startDate && matchDate < endDate;
+        return matchDate >= startDate && matchDate <= endDate;
       });
+
+      let managerMatches = allManagerMatches;
+
+      if (params.matches) {
+        managerMatches = allManagerMatches.slice(0, params.matches);
+        console.log(`Taking first ${params.matches} matches for ${manager.name}`);
+      } else if (params.months) {
+        const monthsEndDate = addMonths(startDate, params.months);
+        managerMatches = allManagerMatches.filter((m) => {
+          const matchDate = new Date(m.date);
+          return matchDate < monthsEndDate;
+        });
+        console.log(`Taking matches within first ${params.months} months for ${manager.name}`);
+      }
 
       console.log(`Matches found for ${manager.name}: ${managerMatches.length}`);
 
@@ -85,12 +100,18 @@ export const compareManagers: TamboTool = {
       };
     };
 
-    return {
+    const period = params.matches ? `First ${params.matches} matches` : `First ${params.months} months`;
+
+    const result = {
       comparison: {
-        period: `First ${params.months} months`,
-        manager1: getManagerStats(mgr1, params.months),
-        manager2: getManagerStats(mgr2, params.months),
+        period,
+        manager1: getManagerStats(mgr1),
+        manager2: getManagerStats(mgr2),
       },
     };
+
+    console.log('compareManagers tool returning:', JSON.stringify(result, null, 2));
+
+    return result;
   },
 };

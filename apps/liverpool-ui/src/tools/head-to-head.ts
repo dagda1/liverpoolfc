@@ -3,6 +3,7 @@ import { subYears } from 'date-fns';
 import { z } from 'zod';
 
 import { loadMatches } from '../data/loader';
+import { HeadToHeadSchema } from '../schemas/head-to-head';
 
 const toolSchema = z.object({
   opponent: z.string().describe('The opponent team name (e.g., "Manchester United", "Chelsea")'),
@@ -16,7 +17,7 @@ type ToolParams = z.infer<typeof toolSchema>;
 export const getHeadToHead: TamboTool = {
   name: 'getHeadToHead',
   description: 'Get Liverpool head-to-head record against a specific opponent with optional date filtering',
-  toolSchema: z.function().args(toolSchema).returns(z.any()),
+  toolSchema: z.function().args(toolSchema).returns(HeadToHeadSchema),
   tool: async (params: ToolParams) => {
     const matches = await loadMatches();
 

@@ -1,39 +1,6 @@
 import { Box, Card, CardContent, Grid, Paper, Typography } from '@mui/material';
-import { z } from 'zod';
 
-const ManagerStatsSchema = z.object({
-  manager: z.string(),
-  matches: z.number(),
-  wins: z.number(),
-  draws: z.number(),
-  losses: z.number(),
-  goalsFor: z.number(),
-  goalsAgainst: z.number(),
-  points: z.number(),
-  pointsPerGame: z.string(),
-  winPercentage: z.string(),
-});
-
-const ManagerComparisonPropsSchema = z.object({
-  comparison: z.object({
-    period: z.string(),
-    manager1: ManagerStatsSchema,
-    manager2: ManagerStatsSchema,
-  }),
-});
-
-type ManagerStats = {
-  manager: string;
-  matches: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  points: number;
-  pointsPerGame: string;
-  winPercentage: string;
-};
+import { ManagerComparisonSchema, type ManagerStats } from '../schemas/manager-comparison';
 
 function ManagerComparisonCardComponent({
   comparison,
@@ -44,6 +11,8 @@ function ManagerComparisonCardComponent({
     manager2: ManagerStats;
   };
 }): JSX.Element {
+  console.log('ManagerComparisonCard received props:', JSON.stringify(comparison, null, 2));
+
   if (!comparison) {
     return <Typography>Loading comparison data...</Typography>;
   }
@@ -108,5 +77,5 @@ export const ManagerComparisonCard = {
   name: 'ManagerComparisonCard',
   description: 'Compare performance statistics of two managers',
   component: ManagerComparisonCardComponent,
-  propsSchema: ManagerComparisonPropsSchema,
+  propsSchema: ManagerComparisonSchema,
 };
